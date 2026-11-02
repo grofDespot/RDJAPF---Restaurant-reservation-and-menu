@@ -1,0 +1,33 @@
+# docker compose up --build      -> database + application (http://localhost:8080)
+# docker compose up -d db        -> database only, run the app from IntelliJ
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: restaurant
+      POSTGRES_USER: restaurant
+      POSTGRES_PASSWORD: restaurant
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restaurant -d restaurant"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/restaurant
+      DB_USERNAME: restaurant
+      DB_PASSWORD: restaurant
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
